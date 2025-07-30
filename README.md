@@ -1,108 +1,100 @@
--- LocalScript em StarterPlayerScripts
-local Lighting = game:GetService("Lighting")
+local Vignette = true -- Altere para false se não quiser a moldura escura
+
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
+local StarterGui = game:GetService("StarterGui")
 local player = Players.LocalPlayer
 
--- IDs das texturas (substitua pelos seus reais)
-local TEXTURE_ID = {
-	ColorMap = "rbxassetid://1234567890",
-	MetalnessMap = "rbxassetid://1234567891",
-	RoughnessMap = "rbxassetid://1234567892",
-	NormalMap = "rbxassetid://1234567893",
-}
+local function applyShader()
+    -- Limpa apenas os efeitos criados por você, se necessário
+    for _, v in pairs(Lighting:GetChildren()) do
+        if v:IsA("PostEffect") or v:IsA("Sky") or v:IsA("Atmosphere") then
+            v:Destroy()
+        end
+    end
 
--- Nome do objeto alvo que vai ter shader
-local SHADER_OBJECT_NAME = "ShaderObjeto"
+    local Bloom = Instance.new("BloomEffect")
+    Bloom.Intensity = 0.3
+    Bloom.Size = 10
+    Bloom.Threshold = 0.8
+    Bloom.Parent = Lighting
 
--- 🧱 Aplica SurfaceAppearance + Highlight
-local function applyShaderToPart(part)
-	if not part:FindFirstChild("SurfaceAppearance") then
-		local surface = Instance.new("SurfaceAppearance")
-		surface.Name = "SurfaceAppearance"
-		surface.ColorMap = TEXTURE_ID.ColorMap
-		surface.MetalnessMap = TEXTURE_ID.MetalnessMap
-		surface.RoughnessMap = TEXTURE_ID.RoughnessMap
-		surface.NormalMap = TEXTURE_ID.NormalMap
-		surface.Parent = part
-	end
+    local Blur = Instance.new("BlurEffect")
+    Blur.Size = 5
+    Blur.Parent = Lighting
 
-	if not part:FindFirstChild("ShaderHighlight") then
-		local hl = Instance.new("Highlight")
-		hl.Name = "ShaderHighlight"
-		hl.FillTransparency = 1
-		hl.OutlineTransparency = 0.3
-		hl.OutlineColor = Color3.fromRGB(255, 222, 100)
-		hl.Adornee = part
-		hl.Parent = part
-	end
+    local ColorCor = Instance.new("ColorCorrectionEffect")
+    ColorCor.Brightness = 0.1
+    ColorCor.Contrast = 0.5
+    ColorCor.Saturation = -0.3
+    ColorCor.TintColor = Color3.fromRGB(255, 235, 203)
+    ColorCor.Parent = Lighting
+
+    local SunRays = Instance.new("SunRaysEffect")
+    SunRays.Intensity = 0.075
+    SunRays.Spread = 0.727
+    SunRays.Parent = Lighting
+
+    local Sky = Instance.new("Sky")
+    Sky.SkyboxBk = "http://www.roblox.com/asset/?id=151165214"
+    Sky.SkyboxDn = "http://www.roblox.com/asset/?id=151165197"
+    Sky.SkyboxFt = "http://www.roblox.com/asset/?id=151165224"
+    Sky.SkyboxLf = "http://www.roblox.com/asset/?id=151165191"
+    Sky.SkyboxRt = "http://www.roblox.com/asset/?id=151165206"
+    Sky.SkyboxUp = "http://www.roblox.com/asset/?id=151165227"
+    Sky.SunAngularSize = 10
+    Sky.Parent = Lighting
+
+    local Atm = Instance.new("Atmosphere")
+    Atm.Density = 0.364
+    Atm.Offset = 0.556
+    Atm.Color = Color3.fromRGB(199, 175, 166)
+    Atm.Decay = Color3.fromRGB(44, 39, 33)
+    Atm.Glare = 0.36
+    Atm.Haze = 1.72
+    Atm.Parent = Lighting
+
+    Lighting.Ambient = Color3.fromRGB(2,2,2)
+    Lighting.Brightness = 2.25
+    Lighting.ColorShift_Bottom = Color3.fromRGB(0,0,0)
+    Lighting.ColorShift_Top = Color3.fromRGB(0,0,0)
+    Lighting.EnvironmentDiffuseScale = 0.2
+    Lighting.EnvironmentSpecularScale = 0.2
+    Lighting.GlobalShadows = true
+    Lighting.OutdoorAmbient = Color3.fromRGB(0,0,0)
+    Lighting.ShadowSoftness = 0.2
+    Lighting.ClockTime = 17
+    Lighting.GeographicLatitude = 45
+    Lighting.ExposureCompensation = 0.5
+
+    -- Aplica a moldura (vignette) corretamente
+    if Vignette and player and player:FindFirstChild("PlayerGui") then
+        local existingGui = player.PlayerGui:FindFirstChild("ShaderVignette")
+        if existingGui then existingGui:Destroy() end
+
+        local Gui = Instance.new("ScreenGui")
+        Gui.Name = "ShaderVignette"
+        Gui.IgnoreGuiInset = true
+        Gui.ResetOnSpawn = false
+        Gui.Parent = player.PlayerGui
+
+        local ShadowFrame = Instance.new("ImageLabel")
+        ShadowFrame.Parent = Gui
+        ShadowFrame.AnchorPoint = Vector2.new(0.5,1)
+        ShadowFrame.Position = UDim2.new(0.5,0,1,0)
+        ShadowFrame.Size = UDim2.new(1,0,1.05,0)
+        ShadowFrame.BackgroundTransparency = 1
+        ShadowFrame.Image = "rbxassetid://4576475446"
+        ShadowFrame.ImageTransparency = 0.3
+        ShadowFrame.ZIndex = 10
+    end
 end
 
--- 🎨 Reaplica efeitos visuais no Lighting
-local function ensureLightingEffects()
-	local function safeInsert(className, props)
-		if not Lighting:FindFirstChild(className) then
-			local effect = Instance.new(className)
-			for prop, value in pairs(props) do
-				effect[prop] = value
-			end
-			effect.Name = className
-			effect.Parent = Lighting
-		end
-	end
+-- Aplica ao entrar no jogo
+applyShader()
 
-	safeInsert("BloomEffect", {
-		Intensity = 1.2,
-		Size = 56,
-		Threshold = 0.8
-	})
-
-	safeInsert("ColorCorrectionEffect", {
-		Brightness = 0.1,
-		Contrast = 0.15,
-		Saturation = 0.25,
-		TintColor = Color3.fromRGB(255, 240, 210)
-	})
-
-	safeInsert("DepthOfFieldEffect", {
-		FarIntensity = 0.3,
-		FocusDistance = 25,
-		InFocusRadius = 25,
-		NearIntensity = 0.3
-	})
-
-	safeInsert("SunRaysEffect", {
-		Intensity = 0.2,
-		Spread = 0.75
-	})
-end
-
--- 🔁 Loop que observa se o objeto shader reaparece
-local function monitorShaderTarget()
-	local lastTarget = nil
-
-	RunService.RenderStepped:Connect(function()
-		ensureLightingEffects()
-
-		local currentTarget = workspace:FindFirstChild(SHADER_OBJECT_NAME)
-		if currentTarget and currentTarget ~= lastTarget then
-			applyShaderToPart(currentTarget)
-			lastTarget = currentTarget
-		end
-	end)
-end
-
--- 🧬 Inicializa no load do personagem e cenário
-local function initialize()
-	ensureLightingEffects()
-	monitorShaderTarget()
-end
-
--- 👤 Espera o personagem do jogador carregar
-if player.Character then
-	initialize()
-else
-	player.CharacterAdded:Connect(function()
-		initialize()
-	end)
-end
+-- Garante que será reaplicado ao mudar de ambiente/casa
+player.CharacterAdded:Connect(function()
+    task.wait(1.5) -- pequeno delay para garantir que a casa carregou
+    applyShader()
+end)
