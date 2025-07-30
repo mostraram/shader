@@ -2,6 +2,9 @@ local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
+Lighting.ResetOnSpawn = false -- evita reset automático
+
+-- Função para aplicar seus efeitos personalizados
 local function applyEffects()
     -- Remove efeitos antigos para não duplicar
     for _, effectName in pairs({
@@ -87,10 +90,32 @@ local function applyEffects()
     Lighting.Technology = Enum.Technology.ShadowMap
 end
 
--- Aplica ao iniciar o jogo
+-- Aplica os efeitos no início
 applyEffects()
 
--- Reaplica sempre que o personagem for carregado (ex.: troca de ambiente)
+-- Reaplica quando personagem for carregado (evita reset ao respawn)
 player.CharacterAdded:Connect(function()
     applyEffects()
+end)
+
+-- Reaplica se alguma propriedade importante do Lighting mudar (proteção extra)
+local propsToCheck = {
+    Ambient = true, Brightness = true, ClockTime = true, OutdoorAmbient = true,
+    Technology = true, EnvironmentDiffuseScale = true, EnvironmentSpecularScale = true,
+    GlobalShadows = true, ShadowSoftness = true, ExposureCompensation = true,
+}
+Lighting.Changed:Connect(function(prop)
+    if propsToCheck[prop] then
+        applyEffects()
+    end
+end)
+
+-- Detecta entrada na casa para reaplicar efeitos
+local houseTrigger = workspace:WaitForChild("HouseTrigger")
+
+houseTrigger.Touched:Connect(function(hit)
+    local character = player.Character
+    if character and hit:IsDescendantOf(character) then
+        applyEffects()
+    end
 end)
