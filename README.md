@@ -1,67 +1,107 @@
--- Script: Realismo Visual no Roblox
-
+local Vignette = true -- Set to false to disable screen vignette
 local Lighting = game:GetService("Lighting")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
 
--- Configurações de Iluminação
-Lighting.Technology = Enum.Technology.Future
-Lighting.Brightness = 2.5
+-- Clean up existing Lighting effects
+for _, v in pairs(Lighting:GetChildren()) do
+	if v:IsA("PostEffect") or v:IsA("Atmosphere") or v:IsA("Sky") then
+		v:Destroy()
+	end
+end
+
+-- Add visual effects
+local Bloom = Instance.new("BloomEffect")
+Bloom.Intensity = 0.3
+Bloom.Size = 10
+Bloom.Threshold = 0.8
+Bloom.Name = "CustomBloom"
+Bloom.Parent = Lighting
+
+local Blur = Instance.new("BlurEffect")
+Blur.Size = 5
+Blur.Name = "CustomBlur"
+Blur.Parent = Lighting
+
+local ColorCor = Instance.new("ColorCorrectionEffect")
+ColorCor.Brightness = 0.1
+ColorCor.Contrast = 0.5
+ColorCor.Saturation = -0.3
+ColorCor.TintColor = Color3.fromRGB(255, 235, 203)
+ColorCor.Name = "CustomColorCorrection"
+ColorCor.Parent = Lighting
+
+local SunRays = Instance.new("SunRaysEffect")
+SunRays.Intensity = 0.075
+SunRays.Spread = 0.727
+SunRays.Name = "CustomSunRays"
+SunRays.Parent = Lighting
+
+local Sky = Instance.new("Sky")
+Sky.Name = "CustomSky"
+Sky.SkyboxBk = "rbxassetid://151165214"
+Sky.SkyboxDn = "rbxassetid://151165197"
+Sky.SkyboxFt = "rbxassetid://151165224"
+Sky.SkyboxLf = "rbxassetid://151165191"
+Sky.SkyboxRt = "rbxassetid://151165206"
+Sky.SkyboxUp = "rbxassetid://151165227"
+Sky.SunAngularSize = 10
+Sky.Parent = Lighting
+
+local Atm = Instance.new("Atmosphere")
+Atm.Name = "CustomAtmosphere"
+Atm.Density = 0.364
+Atm.Offset = 0.556
+Atm.Color = Color3.fromRGB(199, 175, 166)
+Atm.Decay = Color3.fromRGB(44, 39, 33)
+Atm.Glare = 0.36
+Atm.Haze = 1.72
+Atm.Parent = Lighting
+
+-- Lock Lighting settings
+Lighting.Ambient = Color3.fromRGB(2, 2, 2)
+Lighting.Brightness = 2.25
+Lighting.ColorShift_Bottom = Color3.fromRGB(0, 0, 0)
+Lighting.ColorShift_Top = Color3.fromRGB(0, 0, 0)
+Lighting.EnvironmentDiffuseScale = 0.2
+Lighting.EnvironmentSpecularScale = 0.2
 Lighting.GlobalShadows = true
-Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
-Lighting.Ambient = Color3.fromRGB(80, 80, 80)
-Lighting.EnvironmentDiffuseScale = 0.8
-Lighting.EnvironmentSpecularScale = 1
-Lighting.ClockTime = 14  -- Meio da tarde
-Lighting.FogStart = 200
-Lighting.FogEnd = 1000
-Lighting.FogColor = Color3.fromRGB(200, 200, 255)
+Lighting.OutdoorAmbient = Color3.fromRGB(0, 0, 0)
+Lighting.ShadowSoftness = 0.2
+Lighting.ClockTime = 17
+Lighting.GeographicLatitude = 45
+Lighting.ExposureCompensation = 0.5
+Lighting.Technology = Enum.Technology.ShadowMap
 
--- Atmosfera realista
-local atmosphere = Instance.new("Atmosphere")
-atmosphere.Density = 0.4
-atmosphere.Offset = 0.25
-atmosphere.Color = Color3.fromRGB(199, 215, 255)
-atmosphere.Decay = Color3.fromRGB(120, 135, 170)
-atmosphere.Parent = Lighting
+-- Optional Vignette Effect (ScreenGui)
+if Vignette then
+	local Gui = Instance.new("ScreenGui")
+	Gui.Name = "ShaderVignette"
+	Gui.ResetOnSpawn = false
+	Gui.IgnoreGuiInset = true
+	Gui.Parent = StarterGui
 
--- Bloom para brilho suave
-local bloom = Instance.new("BloomEffect")
-bloom.Intensity = 1.5
-bloom.Threshold = 2
-bloom.Size = 56
-bloom.Parent = Lighting
+	local ShadowFrame = Instance.new("ImageLabel")
+	ShadowFrame.Name = "ShadowVignette"
+	ShadowFrame.AnchorPoint = Vector2.new(0.5, 1)
+	ShadowFrame.Position = UDim2.new(0.5, 0, 1, 0)
+	ShadowFrame.Size = UDim2.new(1, 0, 1.05, 0)
+	ShadowFrame.BackgroundTransparency = 1
+	ShadowFrame.Image = "rbxassetid://4576475446"
+	ShadowFrame.ImageTransparency = 0.3
+	ShadowFrame.ZIndex = 10
+	ShadowFrame.Parent = Gui
+end
 
--- ColorCorrection para saturação e contraste
-local colorCorrection = Instance.new("ColorCorrectionEffect")
-colorCorrection.TintColor = Color3.fromRGB(255, 240, 230)
-colorCorrection.Contrast = 0.1
-colorCorrection.Saturation = 0.3
-colorCorrection.Brightness = 0.05
-colorCorrection.Parent = Lighting
+-- Optional: Re-apply settings every 10 seconds to prevent override
+task.spawn(function()
+	while true do
+		wait(10)
 
--- DepthOfField para profundidade de campo cinematográfica
-local dof = Instance.new("DepthOfFieldEffect")
-dof.FarIntensity = 0.15
-dof.FocusDistance = 60
-dof.InFocusRadius = 30
-dof.NearIntensity = 0.3
-dof.Parent = Lighting
+		-- Reset lighting settings
+		Lighting.ClockTime = 17
+		Lighting.ExposureCompensation = 0.5
+		Lighting.Brightness = 2.25
+	end
+end)
 
--- SunRays para iluminação solar suave
-local sunrays = Instance.new("SunRaysEffect")
-sunrays.Intensity = 0.2
-sunrays.Spread = 0.8
-sunrays.Parent = Lighting
-
--- Skybox realista (opcional: substitua IDs por outros que você quiser)
-local sky = Instance.new("Sky")
-sky.SkyboxBk = "rbxassetid://4608572134"
-sky.SkyboxDn = "rbxassetid://4608572781"
-sky.SkyboxFt = "rbxassetid://4608572390"
-sky.SkyboxLf = "rbxassetid://4608572023"
-sky.SkyboxRt = "rbxassetid://4608571649"
-sky.SkyboxUp = "rbxassetid://4608572926"
-sky.SunAngularSize = 20
-sky.CelestialBodiesShown = true
-sky.StarCount = 3000
-sky.Parent = Lighting
+script:Destroy()
