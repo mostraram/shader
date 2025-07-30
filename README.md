@@ -2,11 +2,10 @@ local Vignette = true -- Altere para false se não quiser a moldura escura
 
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
-local StarterGui = game:GetService("StarterGui")
 local player = Players.LocalPlayer
 
 local function applyShader()
-    -- Limpa apenas os efeitos criados por você, se necessário
+    -- Remove efeitos antigos para evitar duplicação
     for _, v in pairs(Lighting:GetChildren()) do
         if v:IsA("PostEffect") or v:IsA("Sky") or v:IsA("Atmosphere") then
             v:Destroy()
@@ -54,6 +53,7 @@ local function applyShader()
     Atm.Haze = 1.72
     Atm.Parent = Lighting
 
+    -- Configurações fixas para manter o visual igual de dia e noite
     Lighting.Ambient = Color3.fromRGB(2,2,2)
     Lighting.Brightness = 2.25
     Lighting.ColorShift_Bottom = Color3.fromRGB(0,0,0)
@@ -63,6 +63,8 @@ local function applyShader()
     Lighting.GlobalShadows = true
     Lighting.OutdoorAmbient = Color3.fromRGB(0,0,0)
     Lighting.ShadowSoftness = 0.2
+
+    -- Fixar horário para um visual constante (exemplo: final da tarde)
     Lighting.ClockTime = 17
     Lighting.GeographicLatitude = 45
     Lighting.ExposureCompensation = 0.5
@@ -90,11 +92,40 @@ local function applyShader()
     end
 end
 
--- Aplica ao entrar no jogo
+-- Aplica o shader ao iniciar
 applyShader()
 
--- Garante que será reaplicado ao mudar de ambiente/casa
+-- Reaplica o shader ao respawnar para garantir consistência
 player.CharacterAdded:Connect(function()
-    task.wait(1.5) -- pequeno delay para garantir que a casa carregou
+    task.wait(1.5)
     applyShader()
 end)
+
+-- Gatilho para reaplicar shader ao entrar em ambientes específicos
+
+-- Suponha que dentro do workspace você tenha uma pasta chamada "AreasInteriores" com partes invisíveis
+-- para as casas, quintais, ambientes. Você deve criar essa pasta e colocar as partes lá manualmente.
+
+local AreasInteriores = workspace:WaitForChild("AreasInteriores")
+
+local debounce = false
+local debounceTime = 2 -- segundos para evitar múltiplas ativações seguidas
+
+local function onAreaTouched(otherPart)
+    if debounce then return end
+    local character = player.Character
+    if not character then return end
+    if otherPart:IsDescendantOf(character) then
+        debounce = true
+        applyShader()
+        task.delay(debounceTime, function()
+            debounce = false
+        end)
+    end
+end
+
+for _, area in pairs(AreasInteriores:GetChildren()) do
+    if area:IsA("BasePart") then
+        area.Touched:Connect(onAreaTouched)
+    end
+end
